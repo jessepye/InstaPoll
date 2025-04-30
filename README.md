@@ -1,143 +1,139 @@
 # InstaPoll
 
-A real-time polling platform built with modern web technologies and AWS cloud services. InstaPoll enables teams and communities to quickly create and participate in polls with instant results.
+InstaPoll is a real-time polling application designed for teams and communities to quickly create, share, and participate in polls with instant results.
 
-## Features
+## Core Features
 
-- **Cloud-Native Architecture**
-  - AWS ECS for container orchestration
-  - S3 + CloudFront for static hosting
-  - DynamoDB for data persistence
-  - Route 53 for DNS management
-  - ACM for SSL/TLS
+* **Easy Poll Creation:** Intuitive interface for setting up polls quickly.
+* **Ranked Choice Voting:** Allows users to rank preferences, providing more nuanced results than standard multiple-choice voting.
+* **Real-Time Results:** Votes are tallied and displayed dynamically (planned feature).
+* **User Accounts:** (Planned) Associate polls with creators and manage user profiles.
 
-- **Voting System**
-  - Single-choice voting
-  - Real-time vote processing via WebSocket
-  - Vote validation and integrity checks
+## Tech Stack
 
-- **Tech Stack**
-  - Frontend: React with TypeScript
-  - Backend: Go with Gin framework
-  - Infrastructure: Terraform
-  - CI/CD: GitHub Actions
-  - Container: Docker
+* **Frontend:** React with TypeScript (or similar modern JS framework)
+* **Backend:** Go with the Gin framework
+* **Database:** MongoDB
+* **Infrastructure (Primary Target: AWS):**
+    * AWS ECS for container orchestration
+    * AWS S3 + CloudFront for static frontend hosting
+    * AWS Route 53 for DNS management
+    * AWS ACM for SSL/TLS certificates
+    * Terraform for Infrastructure as Code (IaC)
+* **CI/CD:** GitHub Actions
+* **Containerization:** Docker
 
 ## Architecture
 
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   Frontend      │     │  API Gateway    │     │  Poll Service   │
-│  (React/TS)     │◄───►│    (AWS)        │◄───►│    (Go)         │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-                                                        ▲
-                                                        │
-┌─────────────────┐     ┌─────────────────┐             │
-│  Vote Service   │◄───►│   DynamoDB      │◄────────────┘
-│    (Go)         │     │    (AWS)        │
-└─────────────────┘     └─────────────────┘
-```
+The application is designed with a cloud-native approach, leveraging containerization for scalability and resilience. Backend services handle poll management and voting logic, communicating with the frontend via APIs.
+
+**For detailed architecture diagrams and component descriptions, please see the [Architecture Overview document](./docs/architecture.md).**
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+* Go (version 1.21 or later)
+* Node.js (version 18 or later)
+* Docker & Docker Compose
+* AWS CLI (configured with appropriate credentials, if deploying to AWS)
+* Terraform (if managing infrastructure via IaC)
+
+## Getting Started
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/jessepye/InstaPoll.git
+    cd instapoll
+    ```
+
+2.  **Set up Cloud Infrastructure (Optional - for AWS deployment):**
+    * Navigate to the Terraform directory: `cd terraform`
+    * Initialize Terraform: `terraform init`
+    * Review the plan: `terraform plan`
+    * Apply the configuration: `terraform apply`
+    * *Note: Ensure your AWS credentials are configured correctly.*
+
+3.  **Install Dependencies:**
+    * **Frontend:**
+        ```bash
+        cd frontend
+        npm install
+        cd ..
+        ```
+    * **Backend:**
+        ```bash
+        cd backend
+        go mod download
+        cd ..
+        ```
 
 ## Development
 
-### Prerequisites
-- Go 1.21+
-- Node.js 18+
-- Docker
-- AWS CLI
-- Terraform
+To run the application locally for development:
 
-### Getting Started
+1.  **Configure Environment:**
+    * Ensure you have a running MongoDB instance accessible.
+    * Set necessary environment variables for the backend (e.g., database connection string, port). Often done via a `.env` file or system variables.
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/instapoll.git
-   cd instapoll
-   ```
+2.  **Start the Backend Server:**
+    ```bash
+    cd backend
+    # Example: Set env vars if needed, then run
+    # export MONGODB_URI="mongodb://localhost:27017"
+    go run main.go
+    ```
+    The backend will typically be available at `http://localhost:8080` (or the configured port).
 
-2. Set up AWS infrastructure:
-   ```bash
-   cd terraform
-   terraform init
-   terraform plan
-   terraform apply
-   ```
-
-3. Configure GitHub Secrets:
-   - `AWS_ACCESS_KEY_ID`
-   - `AWS_SECRET_ACCESS_KEY`
-   - `CLOUDFRONT_DISTRIBUTION_ID`
-
-4. Install dependencies:
-   ```bash
-   # Frontend
-   cd frontend
-   npm install
-
-   # Backend
-   cd ../backend
-   go mod download
-   ```
-
-5. Start development servers:
-   ```bash
-   # Frontend
-   cd frontend
-   npm run dev
-
-   # Backend
-   cd backend
-   go run main.go
-   ```
+3.  **Start the Frontend Development Server:**
+    ```bash
+    cd frontend
+    npm run dev # Or your specific command to start the dev server
+    ```
+    The frontend will usually be available at `http://localhost:3000` (or another port specified by your framework).
 
 ## Testing
 
-```bash
-# Frontend tests
-cd frontend
-npm test
-
-# Backend tests
-cd backend
-go test ./...
-```
+* **Frontend Tests:**
+    ```bash
+    cd frontend
+    npm test # Or your specific test command
+    ```
+* **Backend Tests:**
+    ```bash
+    cd backend
+    go test ./...
+    ```
 
 ## Deployment
 
-The application uses GitHub Actions for automated deployment:
+Deployment to AWS is automated via GitHub Actions (example flow):
 
-1. Push to main branch
-2. GitHub Actions:
-   - Runs tests
-   - Builds containers
-   - Deploys to AWS
-   - Updates CloudFront cache
+1.  Pushing changes to the `main` branch triggers the workflow.
+2.  The workflow typically performs these steps:
+    * Runs linters and tests.
+    * Builds Docker containers for the backend service(s).
+    * Pushes container images to a registry (e.g., AWS ECR).
+    * Builds the frontend application.
+    * Uploads static frontend assets to AWS S3.
+    * Updates the AWS ECS service to deploy the new backend container.
+    * Invalidates the CloudFront cache (if necessary).
+    * *(Note: Requires `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and potentially other secrets configured in GitHub Actions.)*
 
-## Security
+## Security Considerations
 
-- AWS IAM roles and policies
-- S3 bucket policies
-- CloudFront security headers
-- HTTPS/TLS with ACM
-- Input validation
-- Rate limiting
+* Utilize AWS IAM roles and least-privilege permissions.
+* Secure S3 buckets with appropriate policies.
+* Configure security headers via CloudFront.
+* Enforce HTTPS/TLS using ACM certificates.
+* Implement robust input validation on the backend.
+* Protect MongoDB with authentication and network rules.
+* Consider rate limiting for public API endpoints.
 
 ## Contributing
 
-While this is primarily a personal project, suggestions and feedback are welcome.
-
+This is currently a personal project, but suggestions and feedback are welcome. Please feel free to open an issue to discuss potential changes or report bugs.
 
 ## Author
 
-Jesse Pye - [GitHub](https://github.com/jessepye)
-
----
-
-## Features
-
-- **Quick Poll Creation:** Create and share polls with minimal setup.
-- **Multiple Voting Styles:** Supports single-choice, ranked choice, and other custom voting mechanisms.
-- **Real-Time Updates:** Leverages asynchronous processing for near real-time vote tallying.
-- **Distributed Architecture:** Designed with microservices, message queues, and container orchestration for scalability and fault tolerance.
-- **User-Friendly Interface:** Modern front-end framework with responsive design and PWA capabilities.
-
+* **Jesse Pye** - [GitHub](https://github.com/jessepye)
