@@ -36,8 +36,8 @@ func (h *PollHandler) RegisterRoutes(r *gin.Engine) {
 	{
 		// Assign handler methods (which now belong to PollHandler) to specific
 		// HTTP methods and paths within the group.
-		polls.POST("/", h.CreatePoll)   // Handle POST requests to /api/polls
-		polls.GET("/", h.ListPolls)    // Handle GET requests to /api/polls
+		polls.POST("", h.CreatePoll)   // Handle POST requests to /api/polls
+		polls.GET("", h.ListPolls)    // Handle GET requests to /api/polls
 		polls.GET("/:id", h.GetPoll)    // Handle GET requests to /api/polls/:id (with path parameter)
 		// TODO: Add routes for PUT /:id (UpdatePoll) and DELETE /:id (DeletePoll) later
 	}
