@@ -4,7 +4,7 @@ This document outlines the planned milestones for developing the InstaPoll appli
 
 ## Milestone 1: Core Infrastructure & Basic Functionality
 
-**Goal:** Set up the project foundation, implement minimal functional polls without user accounts, and establish basic deployment.
+**Goal:** Set up the project foundation, implement minimal functional polls without user accounts, and establish basic deployment and local development tooling.
 
 * [X] Set up repository structure and documentation framework (`README.md`, `docs/`)
 * [ ] Implement basic backend API for poll creation & retrieval (Go/Gin)
@@ -18,10 +18,10 @@ This document outlines the planned milestones for developing the InstaPoll appli
         * [ ] Create endpoint for getting single poll (GET `/api/polls/:id`)
         * [ ] Add basic error handling middleware
     * [ ] Implement Database Layer (MongoDB)
-        * [ ] Set up MongoDB connection (using Go driver)
-        * [ ] Define and create MongoDB collections for polls
-        * [ ] Implement CRUD operations for polls using MongoDB
-        * [ ] Add basic database error handling
+        * [ ] Set up MongoDB connection (using Go driver) in `main.go`
+        * [ ] Define and create MongoDB collections for polls (implicitly done via operations)
+        * [ ] Implement CRUD operations for polls using MongoDB in handlers
+        * [ ] Add basic database error handling in handlers
     * [X] Add Input Validation
         * [X] Validate poll creation payload
         * [ ] Sanitize user input
@@ -30,6 +30,8 @@ This document outlines the planned milestones for developing the InstaPoll appli
         * [ ] Implement basic rate limiting
         * [ ] Add CORS configuration
         * [ ] Set up basic request logging
+* [ ] Set up Local Development Environment
+    * [ ] **Create `docker-compose.yml` in backend directory to manage local MongoDB for testing**
 * [ ] Create simple frontend for creating and viewing polls (React/TS)
     * [ ] Create Basic UI Components
         * [ ] Build poll creation form
