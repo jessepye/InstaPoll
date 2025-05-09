@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"context"
+	"errors"
 	"log"
 	"net/http"
 	"time"
@@ -9,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo" // Import mongo driver types
 	// "go.mongodb.org/mongo-driver/bson/primitive" // May be needed if using default MongoDB ObjectID
 )
@@ -36,9 +39,9 @@ func (h *PollHandler) RegisterRoutes(r *gin.Engine) {
 	{
 		// Assign handler methods (which now belong to PollHandler) to specific
 		// HTTP methods and paths within the group.
-		polls.POST("", h.CreatePoll)   // Handle POST requests to /api/polls
-		polls.GET("", h.ListPolls)    // Handle GET requests to /api/polls
-		polls.GET("/:id", h.GetPoll)    // Handle GET requests to /api/polls/:id (with path parameter)
+		polls.POST("", h.CreatePoll) // Handle POST requests to /api/polls
+		polls.GET("", h.ListPolls)   // Handle GET requests to /api/polls
+		polls.GET("/:id", h.GetPoll) // Handle GET requests to /api/polls/:id (with path parameter)
 		// TODO: Add routes for PUT /:id (UpdatePoll) and DELETE /:id (DeletePoll) later
 	}
 }
@@ -80,26 +83,16 @@ func (h *PollHandler) CreatePoll(c *gin.Context) {
 		return
 	}
 
-	// --- Database Interaction (TDD Step: Implement this next!) ---
-	// TODO: Implement database insertion logic here.
-	// This is the section that needs code to make the TestCreatePoll database assertion pass.
-	/*
-		Example Implementation:
-		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second) // Use request context with timeout
-		defer cancel()
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second) // Use request context with timeout
+	defer cancel()
 
-		_, err := h.collection.InsertOne(ctx, poll) // Insert the poll document
-		if err != nil {
-			log.Printf("Error inserting poll into database: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create poll"})
-			return
-		}
-		log.Printf("Successfully inserted poll with ID: %s", poll.ID)
-	*/
-
-	// If the TODO block above were implemented, the poll would be saved.
-	// For now, we log that it *would* be saved.
-	log.Printf("TODO: Save poll to database: %+v", poll)
+	_, err := h.collection.InsertOne(ctx, poll) // Insert the poll document
+	if err != nil {
+		log.Printf("Error inserting poll into database: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create poll"})
+		return
+	}
+	log.Printf("Successfully inserted poll with ID: %s", poll.ID)
 
 	// Return the newly created poll object (including generated IDs and timestamps)
 	// with an HTTP 201 Created status.
@@ -119,44 +112,34 @@ func (h *PollHandler) GetPoll(c *gin.Context) {
 		return
 	}
 
-	// --- Database Interaction (TDD Step: Implement this next!) ---
-	// TODO: Implement database fetch logic here using pollID.
-	// This is the section that needs code to make the TestGetPoll database assertion pass.
-	/*
-		Example Implementation:
-		var result models.Poll
-		// Create a filter to find the document where the 'id' field matches pollID.
-		// Note: If using MongoDB's default _id, the field name is "_id".
-		// If you stored your UUID string in the 'id' field, use "id". Adjust accordingly.
-		filter := bson.M{"_id": pollID} // Assuming you store your UUID in the _id field
+	var result models.Poll
+	// Create a filter to find the document where the 'id' field matches pollID.
+	// Note: If using MongoDB's default _id, the field name is "_id".
+	// If you stored your UUID string in the 'id' field, use "id". Adjust accordingly.
+	filter := bson.M{"_id": pollID} // Assuming you store your UUID in the _id field
 
-		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
-		defer cancel()
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
 
-		// Attempt to find one document matching the filter.
-		err := h.collection.FindOne(ctx, filter).Decode(&result)
+	// Attempt to find one document matching the filter.
+	err := h.collection.FindOne(ctx, filter).Decode(&result)
 
-		if err != nil {
-			// Check if the error is because no document was found.
-			if errors.Is(err, mongo.ErrNoDocuments) {
-				log.Printf("Poll not found with ID: %s", pollID)
-				c.JSON(http.StatusNotFound, gin.H{"error": "Poll not found"})
-			} else {
-				// Handle other potential database errors.
-				log.Printf("Error retrieving poll with ID %s: %v", pollID, err)
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve poll"})
-			}
-			return
+	if err != nil {
+		// Check if the error is because no document was found.
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			log.Printf("Poll not found with ID: %s", pollID)
+			c.JSON(http.StatusNotFound, gin.H{"error": "Poll not found"})
+		} else {
+			// Handle other potential database errors.
+			log.Printf("Error retrieving poll with ID %s: %v", pollID, err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve poll"})
 		}
+		return
+	}
 
-		// If found, return the poll data with HTTP 200 OK.
-		c.JSON(http.StatusOK, result)
-		return // Important to return here after successful handling
-	*/
-
-	// If the TODO block above were implemented, the poll would be fetched.
-	// For now, we log that it *would* be fetched.
-	log.Printf("TODO: Fetch poll with ID %s from database", pollID)
+	// If found, return the poll data with HTTP 200 OK.
+	c.JSON(http.StatusOK, result)
+	return // Important to return here after successful handling
 
 	// Return a 404 Not Found status as the database logic isn't implemented yet.
 	c.JSON(http.StatusNotFound, gin.H{"error": "Poll not found (DB fetch not implemented)"})
@@ -165,55 +148,45 @@ func (h *PollHandler) GetPoll(c *gin.Context) {
 // ListPolls handles retrieving a list of all polls.
 // It's now a method on PollHandler. Pagination should be added later.
 func (h *PollHandler) ListPolls(c *gin.Context) {
-	// --- Database Interaction (TDD Step: Implement this next!) ---
-	// TODO: Implement database fetch logic here to retrieve multiple documents.
-	// This is the section that needs code to make the TestListPolls database assertion pass.
-	/*
-		Example Implementation:
-		var results []models.Poll // Slice to hold the results
+	var results []models.Poll // Slice to hold the results
 
-		// Create an empty filter {} to match all documents.
-		filter := bson.M{}
+	// Create an empty filter {} to match all documents.
+	filter := bson.M{}
 
-		// Add query parameters for pagination later (e.g., limit, skip/offset)
-		// findOptions := options.Find()
-		// findOptions.SetLimit(10) // Example limit
+	// Add query parameters for pagination later (e.g., limit, skip/offset)
+	// findOptions := options.Find()
+	// findOptions.SetLimit(10) // Example limit
 
-		ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second) // Longer timeout for potentially larger lists
-		defer cancel()
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second) // Longer timeout for potentially larger lists
+	defer cancel()
 
-		// Find documents matching the filter.
-		cursor, err := h.collection.Find(ctx, filter) // Add findOptions here if using pagination
-		if err != nil {
-			log.Printf("Error finding polls: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve polls"})
-			return
-		}
-		// Ensure the cursor is closed when the function returns.
-		defer cursor.Close(ctx)
+	// Find documents matching the filter.
+	cursor, err := h.collection.Find(ctx, filter) // Add findOptions here if using pagination
+	if err != nil {
+		log.Printf("Error finding polls: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve polls"})
+		return
+	}
+	// Ensure the cursor is closed when the function returns.
+	defer cursor.Close(ctx)
 
-		// Decode all documents found by the cursor into the results slice.
-		if err = cursor.All(ctx, &results); err != nil {
-			log.Printf("Error decoding polls from cursor: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to decode polls"})
-			return
-		}
+	// Decode all documents found by the cursor into the results slice.
+	if err = cursor.All(ctx, &results); err != nil {
+		log.Printf("Error decoding polls from cursor: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to decode polls"})
+		return
+	}
 
-		// Important: If no documents are found, cursor.All returns an empty slice and no error.
-		// However, if the results slice was initially nil, encoding it to JSON might result in 'null'.
-		// Ensure we return an empty JSON array '[]' instead of 'null' if no polls exist.
-		if results == nil {
-			results = []models.Poll{}
-		}
+	// Important: If no documents are found, cursor.All returns an empty slice and no error.
+	// However, if the results slice was initially nil, encoding it to JSON might result in 'null'.
+	// Ensure we return an empty JSON array '[]' instead of 'null' if no polls exist.
+	if results == nil {
+		results = []models.Poll{}
+	}
 
-		// Return the list of polls with HTTP 200 OK.
-		c.JSON(http.StatusOK, results)
-		return // Important to return here after successful handling
-	*/
-
-	// If the TODO block above were implemented, the polls would be listed.
-	// For now, we log that it *would* happen.
-	log.Println("TODO: Fetch list of polls from database")
+	// Return the list of polls with HTTP 200 OK.
+	c.JSON(http.StatusOK, results)
+	return // Important to return here after successful handling
 
 	// Return an empty list with HTTP 200 OK as the DB logic isn't implemented yet.
 	c.JSON(http.StatusOK, []models.Poll{})
